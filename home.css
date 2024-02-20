@@ -57,12 +57,12 @@ body {
     background-color: #555;
 }
 
-#start_game {
+.game_buttons {
     display: block;
     margin: 20px auto;
     padding: 10px 20px;
     font-size: 1em;
-    background-color: #333;
+    background-color: #3e7e44;
     color: #fff;
     border: none;
     border-radius: 5px;
@@ -70,8 +70,8 @@ body {
     transition: background-color 0.3s ease;
 }
 
-#start_game:hover {
-    background-color: #555;
+.game_buttons:hover {
+    background-color: #4fab6e;
 }
 
 #death_screen {

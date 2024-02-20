@@ -4,12 +4,13 @@ let dungeon_tree = {};
 let aiMap = "";
 let metrics = {};
 let playerSteps = "";
+let success = false;
+let DEBUG = true;
 
 function startGame() {
     var startButton = document.getElementById("start_game");
     var gameSection = document.getElementById("game");
     var current_steps_text = document.getElementById("current_level");
-    var AI_info_text = document.getElementById("ai_info");
     var human_info_text = document.getElementById("human_info")
 
 
@@ -20,22 +21,24 @@ function startGame() {
             "numHiddenDangers": 0,
             "shortestPathLength": 0,
             "playerFollowPercentage": 0, // How often did the player follow the AI
-            "success": false
+            "success": false,
+            "diedByHiddenDanger": false
         }
     }
 
     while (aiMap === "") {
         metrics = getDefaultMetrics();
         dungeon_tree = generateDungeonTree();
-        aiMap = generateAIMap();
+        aiMap = generateAIMap(dungeon_tree);
+        updateAIMapText();
     }
     playerSteps = "";
+    success = false;
 
-    console.log(dungeon_tree);
-    console.log(metrics);
+    // console.log(dungeon_tree);
+    // console.log(metrics);
 
     current_steps_text.textContent = "Current Steps: None";
-    AI_info_text.textContent = `The Dungeon Map indicates ${aiMap} is the best route!`
     human_info_text.textContent = dungeon_tree["humanWarning"];
 
     startButton.style.display = "none";
@@ -139,9 +142,15 @@ function generateDungeonTree() {
     return finalTree;
 }
 
-function generateAIMap() {
-    let queue = new Deque([[dungeon_tree, ""]]);
+function updateAIMapText() {
+    var AI_info_text = document.getElementById("ai_info");
+    AI_info_text.textContent = `The Dungeon Map indicates ${aiMap} is the best route!`;
+}
+
+function generateAIMap(subtree) {
+    let queue = new Deque([[subtree, ""]]);
     let dirArr = ["L", "M", "R"];
+
     while (!queue.isEmpty()) {
         let room = queue.removeFront();
         if (room[0]["end"] === undefined || room[0]["danger"]) {
@@ -172,16 +181,20 @@ function getCurrentSubtree() {
 function movePlayer(dir) {
     var current_steps_text = document.getElementById("current_level");
     var human_info_text = document.getElementById("human_info");
-    playerSteps += dir
+    playerSteps += dir;
     let curSubTree = getCurrentSubtree();
+    aiMap = generateAIMap(curSubTree);
+    updateAIMapText();
 
     current_steps_text.textContent = `Current Steps: ${playerSteps}`;
     human_info_text.textContent = curSubTree["humanWarning"];
     if (curSubTree["danger"] || curSubTree["hiddenDanger"]) {
+        metrics["diedByHiddenDanger"] = curSubTree["hiddenDanger"]
         var death_screen_text = document.getElementById("death_screen");
         death_screen_text.style.display = "block";
     } else if (curSubTree["end"]) {
         var win_screen_text = document.getElementById("win_screen");
+        success = true
         win_screen_text.style.display = "block";
     }
 }
@@ -213,6 +226,7 @@ function endGame() {
 
     metrics["shortestPathLength"] = aiMap.length;
     metrics["playerFollowPercentage"] = findPFP()
+    metrics["success"] = success;
 
     var startButton = document.getElementById("start_game");
     var gameSection = document.getElementById("game");
@@ -225,6 +239,10 @@ function endGame() {
 
     startButton.style.display = "block";
     gameSection.style.display = "none";
+
+    if (DEBUG) {
+        console.log(metrics);
+    }
 }
 
 var start_game_button = document.getElementById("start_game");
